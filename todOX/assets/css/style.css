@@ -1,0 +1,114 @@
+```css
+/* Custom styles for Todox */
+
+/* Todo item styling */
+.todo-item {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    border: 1px solid #e9ecef;
+    border-radius: 0.25rem;
+    margin-bottom: 0.5rem;
+    background-color: #fff;
+    transition: all 0.2s ease-in-out;
+}
+
+.todo-item:hover {
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+.todo-item.completed .todo-title {
+    text-decoration: line-through;
+    color: #6c757d;
+}
+
+.todo-checkbox {
+    margin-right: 1rem;
+}
+
+.todo-title {
+    flex-grow: 1;
+    font-size: 1rem;
+    margin: 0;
+}
+
+.todo-date {
+    font-size: 0.8rem;
+    color: #6c757d;
+    margin-right: 1rem;
+}
+
+.todo-delete {
+    color: #dc3545;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1.2rem;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+}
+
+.todo-delete:hover {
+    opacity: 1;
+}
+
+/* Filter buttons */
+.btn-group .btn {
+    border-radius: 0;
+}
+
+.btn-group .btn:first-child {
+    border-top-left-radius: 0.25rem;
+    border-bottom-left-radius: 0.25rem;
+}
+
+.btn-group .btn:last-child {
+    border-top-right-radius: 0.25rem;
+    border-bottom-right-radius: 0.25rem;
+}
+
+/* Empty state */
+#empty-state {
+    display: none;
+}
+
+/* Loading state */
+.loading {
+    text-align: center;
+    padding: 1rem;
+}
+
+.spinner {
+    border: 4px solid rgba(0, 0, 0, 0.1);
+    border-radius: 50%;
+    border-top: 4px solid #007bff;
+    width: 30px;
+    height: 30px;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 1rem;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Responsive adjustments */
+@media (max-width: 576px) {
+    .todo-item {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .todo-checkbox {
+        margin-bottom: 0.5rem;
+    }
+    
+    .todo-actions {
+        display: flex;
+        width: 100%;
+        justify-content: space-between;
+        margin-top: 0.5rem;
+    }
+}
+```
