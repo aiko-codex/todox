@@ -1,39 +1,33 @@
 ```css
-/* Existing CSS remains unchanged */
-
-/* === Filter Tabs Container === */
-.filter-tabs {
-  display: flex;
-  margin-bottom: 20px;
-  border-bottom: 1px solid #e0e0e0;
-  padding-bottom: 5px;
+body {
+    background-color: #f8f9fa;
 }
 
-.filter-tab {
-  padding: 8px 16px;
-  margin-right: 10px;
-  background: #f9f9f9;
-  border: 1px solid #ddd;
-  border-bottom: none;
-  border-radius: 6px 6px 0 0;
-  cursor: pointer;
-  font-size: 14px;
-  color: #555;
-  transition: all 0.2s ease;
+.container {
+    max-width: 600px;
 }
 
-.filter-tab:hover {
-  background: #f0f0f0;
+.todo-item {
+    transition: opacity 0.3s ease-out;
 }
 
-.filter-tab.active {
-  background: #007bff;
-  color: white;
-  border-color: #007bff;
-  font-weight: bold;
+.todo-item.completed .card-body span {
+    text-decoration: line-through;
+    color: #6c757d;
 }
 
-.filter-tab.active:hover {
-  background: #0069d9;
+.filter-buttons .btn {
+    margin: 0 5px;
+}
+
+/* Fade out animation */
+.fade-out {
+    opacity: 0;
+    transform: translateX(20px);
+}
+
+/* Ensure smooth transitions */
+.todo-item {
+    transition: all 0.3s ease-out;
 }
 ```
