@@ -1,41 +1,35 @@
 <?php
 header('Content-Type: application/json');
-require_once 'connect.php';
 
 // Only allow POST requests
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
-    echo json_encode(['error' => 'Method not allowed']);
+    echo json_encode(array('error' => 'Method not allowed'));
     exit;
 }
 
-// Parse and validate JSON input
-$data = parseJsonInput();
+// Get JSON input
+$input = json_decode(file_get_contents('php://input'), true);
 
-// Validate ID
-$id = validateId(isset($data['id']) ? $data['id'] : 0);
+// Validate input
+if (!isset($input['id'])) {
+    http_response_code(400);
+    echo json_encode(array('error' => 'Todo ID is required'));
+    exit;
+}
 
-// Connect to database
-$connection = getDbConnection();
+$id = intval($input['id']);
+
+// Include database connection
+require_once 'connect.php';
+$conn = get_db_connection();
 
 // First, get current status
-$stmt = mysqli_prepare($connection, "SELECT is_completed FROM todos WHERE id = ?");
-if (!$stmt) {
-    http_response_code(500);
-    echo json_encode(['error' => 'Failed to prepare statement']);
-    closeDbConnection($connection);
-    exit;
-}
-
-mysqli_stmt_bind_param($stmt, "i", $id);
-mysqli_stmt_execute($stmt);
-$result = mysqli_stmt_get_result($stmt);
+$result = mysqli_query($conn, "SELECT is_completed FROM todos WHERE id = $id");
 
 if (!$result || mysqli_num_rows($result) === 0) {
     http_response_code(404);
-    echo json_encode(['error' => 'Todo not found']);
-    mysqli_stmt_close($stmt);
-    closeDbConnection($connection);
+    echo json_encode(array('error' => 'Todo not found'));
     exit;
 }
 
@@ -43,30 +37,23 @@ $row = mysqli_fetch_assoc($result);
 $current_status = intval($row['is_completed']);
 $new_status = $current_status === 1 ? 0 : 1;
 
-mysqli_stmt_close($stmt);
-
 // Update the status
-$stmt = mysqli_prepare($connection, "UPDATE todos SET is_completed = ?, updated_at = NOW() WHERE id = ?");
-if (!$stmt) {
-    http_response_code(500);
-    echo json_encode(['error' => 'Failed to prepare update statement']);
-    closeDbConnection($connection);
-    exit;
-}
+$update_result = mysqli_query($conn, "UPDATE todos SET is_completed = $new_status WHERE id = $id");
 
-mysqli_stmt_bind_param($stmt, "ii", $new_status, $id);
-
-if (mysqli_stmt_execute($stmt)) {
-    echo json_encode([
-        'id' => $id,
-        'is_completed' => $new_status === 1
-    ]);
+if ($update_result) {
+    // Fetch updated todo
+    $result = mysqli_query($conn, "SELECT * FROM todos WHERE id = $id");
+    $todo = mysqli_fetch_assoc($result);
+    
+    // Convert is_completed to boolean
+    $todo['is_completed'] = (bool)$todo['is_completed'];
+    
+    echo json_encode($todo);
 } else {
     http_response_code(500);
-    echo json_encode(['error' => 'Failed to update todo']);
+    echo json_encode(array('error' => 'Failed to update todo'));
 }
 
-// Clean up
-mysqli_stmt_close($stmt);
-closeDbConnection($connection);
+// Close connection
+mysqli_close($conn);
 ?>

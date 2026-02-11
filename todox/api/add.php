@@ -1,55 +1,56 @@
 <?php
 header('Content-Type: application/json');
-require_once 'connect.php';
 
 // Only allow POST requests
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
-    echo json_encode(['error' => 'Method not allowed']);
+    echo json_encode(array('error' => 'Method not allowed'));
     exit;
 }
 
-// Parse and validate JSON input
-$data = parseJsonInput();
+// Get JSON input
+$input = json_decode(file_get_contents('php://input'), true);
 
-// Validate title
-$title = validateTitle(isset($data['title']) ? $data['title'] : '');
+// Validate input
+if (!isset($input['title']) || empty(trim($input['title']))) {
+    http_response_code(400);
+    echo json_encode(array('error' => 'Title is required'));
+    exit;
+}
 
-// Connect to database
-$connection = getDbConnection();
+$title = trim($input['title']);
+
+// Limit title length
+if (strlen($title) > 255) {
+    http_response_code(400);
+    echo json_encode(array('error' => 'Title too long'));
+    exit;
+}
+
+// Include database connection
+require_once 'connect.php';
+$conn = get_db_connection();
 
 // Prepare statement to prevent SQL injection
-$stmt = mysqli_prepare($connection, "INSERT INTO todos (title, is_completed, created_at, updated_at) VALUES (?, 0, NOW(), NOW())");
-
-if (!$stmt) {
-    http_response_code(500);
-    echo json_encode(['error' => 'Failed to prepare statement']);
-    closeDbConnection($connection);
-    exit;
-}
-
-// Bind parameters and execute
+$stmt = mysqli_prepare($conn, "INSERT INTO todos (title) VALUES (?)");
 mysqli_stmt_bind_param($stmt, "s", $title);
 
 if (mysqli_stmt_execute($stmt)) {
-    $todo_id = mysqli_insert_id($connection);
+    // Get the inserted ID
+    $inserted_id = mysqli_insert_id($conn);
     
-    // Return the newly created todo
-    $response = [
-        'id' => $todo_id,
-        'title' => $title,
-        'is_completed' => false,
-        'created_at' => date('Y-m-d H:i:s'),
-        'updated_at' => date('Y-m-d H:i:s')
-    ];
+    // Fetch the newly inserted todo
+    $result = mysqli_query($conn, "SELECT * FROM todos WHERE id = $inserted_id");
+    $todo = mysqli_fetch_assoc($result);
     
-    echo json_encode($response);
+    http_response_code(201);
+    echo json_encode($todo);
 } else {
     http_response_code(500);
-    echo json_encode(['error' => 'Failed to create todo']);
+    echo json_encode(array('error' => 'Failed to add todo'));
 }
 
-// Clean up
+// Close connections
 mysqli_stmt_close($stmt);
-closeDbConnection($connection);
+mysqli_close($conn);
 ?>

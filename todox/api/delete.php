@@ -1,49 +1,48 @@
 <?php
 header('Content-Type: application/json');
-require_once 'connect.php';
 
 // Only allow POST requests
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
-    echo json_encode(['error' => 'Method not allowed']);
+    echo json_encode(array('error' => 'Method not allowed'));
     exit;
 }
 
-// Parse and validate JSON input
-$data = parseJsonInput();
+// Get JSON input
+$input = json_decode(file_get_contents('php://input'), true);
 
-// Validate ID
-$id = validateId(isset($data['id']) ? $data['id'] : 0);
-
-// Connect to database
-$connection = getDbConnection();
-
-// Prepare statement to prevent SQL injection
-$stmt = mysqli_prepare($connection, "DELETE FROM todos WHERE id = ?");
-if (!$stmt) {
-    http_response_code(500);
-    echo json_encode(['error' => 'Failed to prepare statement']);
-    closeDbConnection($connection);
+// Validate input
+if (!isset($input['id'])) {
+    http_response_code(400);
+    echo json_encode(array('error' => 'Todo ID is required'));
     exit;
 }
 
-// Bind parameters and execute
-mysqli_stmt_bind_param($stmt, "i", $id);
+$id = intval($input['id']);
 
-if (mysqli_stmt_execute($stmt)) {
-    $affected_rows = mysqli_stmt_affected_rows($stmt);
-    if ($affected_rows > 0) {
-        echo json_encode(['message' => 'Todo deleted successfully']);
-    } else {
-        http_response_code(404);
-        echo json_encode(['error' => 'Todo not found']);
-    }
+// Include database connection
+require_once 'connect.php';
+$conn = get_db_connection();
+
+// Check if todo exists
+$result = mysqli_query($conn, "SELECT id FROM todos WHERE id = $id");
+
+if (!$result || mysqli_num_rows($result) === 0) {
+    http_response_code(404);
+    echo json_encode(array('error' => 'Todo not found'));
+    exit;
+}
+
+// Delete the todo
+$delete_result = mysqli_query($conn, "DELETE FROM todos WHERE id = $id");
+
+if ($delete_result) {
+    echo json_encode(array('success' => true));
 } else {
     http_response_code(500);
-    echo json_encode(['error' => 'Failed to delete todo']);
+    echo json_encode(array('error' => 'Failed to delete todo'));
 }
 
-// Clean up
-mysqli_stmt_close($stmt);
-closeDbConnection($connection);
+// Close connection
+mysqli_close($conn);
 ?>

@@ -1,31 +1,23 @@
 #!/bin/bash
 
-# Fail fast on errors
-set -e
+# Setup script for Todox application
 
-echo "Setting up project directory structure..."
+echo "Setting up Todox application..."
 
-# Create the complete directory hierarchy
-mkdir -p src/{api,database,includes,assets/css,assets/js}
+# Create database directory
+mkdir -p database
 
-echo "Directories created successfully."
+# Create MySQL database and user (you may need to adjust these credentials)
+echo "Creating database..."
+mysql -u root -e "CREATE DATABASE IF NOT EXISTS todox;"
+mysql -u root -e "CREATE USER IF NOT EXISTS 'todox_user'@'localhost' IDENTIFIED BY 'todox_pass';"
+mysql -u root -e "GRANT ALL PRIVILEGES ON todox.* TO 'todox_user'@'localhost';"
+mysql -u root -e "FLUSH PRIVILEGES;"
 
-# Set appropriate permissions on database directory
-chmod 775 src/database
+# Update database connection details in connect.php
+sed -i "s/define('DB_USER', 'root')/define('DB_USER', 'todox_user')/" todox/api/connect.php
+sed -i "s/define('DB_PASS', '')/define('DB_PASS', 'todox_pass')/" todox/api/connect.php
+sed -i "s/define('DB_NAME', 'todox')/define('DB_NAME', 'todox')/" todox/api/connect.php
 
-echo "Permissions set on database directory."
-
-# Create .gitkeep files to ensure Git tracks empty directories
-touch src/api/.gitkeep \
-      src/database/.gitkeep \
-      src/includes/.gitkeep \
-      src/assets/css/.gitkeep \
-      src/assets/js/.gitkeep
-
-echo "Placeholder files created for Git tracking."
-
-echo "Setup complete! Directory structure and permissions configured."
-echo ""
-echo "Next steps:"
-echo "1. Start the development server: php -S localhost:8000"
-echo "2. Access the application in your browser at http://localhost:8000"
+echo "Setup complete!"
+echo "To start the application, run: php -S localhost:8000 -t todox/"
